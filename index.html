@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Compressor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      padding: 6px 0 2px;
+    }
+
+    /* ── Splitter ── */
+    .splitter-wrap {
+      display: flex;
+      height: 430px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .panel {
+      flex: 1;
+      border: 2px dashed #555;
+      border-radius: 12px;
+      background: #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      min-width: 80px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .panel.drag-over {
+      border-color: #3b82f6;
+      background: #162032;
+    }
+
+    .panel img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .panel-hint {
+      color: #666;
+      font-size: 14px;
+      text-align: center;
+      padding: 16px;
+      pointer-events: none;
+      line-height: 1.6;
+    }
+
+    .panel-tag {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      background: rgba(0,0,0,0.55);
+      color: #aaa;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    .splitter-handle {
+      width: 6px;
+      flex-shrink: 0;
+      background: #3b82f6;
+      cursor: col-resize;
+      border-radius: 3px;
+      transition: background 0.15s;
+    }
+
+    .splitter-handle:hover { background: #60a5fa; }
+
+    /* ── Labels ── */
+    .meta-label {
+      text-align: center;
+      color: #777;
+      font-size: 12px;
+      min-height: 18px;
+    }
+
+    .info-label {
+      text-align: center;
+      color: #fff;
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    /* ── Presets ── */
+    .presets-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .presets-row span {
+      color: #888;
+      font-size: 13px;
+    }
+
+    .preset-btn {
+      background: transparent;
+      color: #3b82f6;
+      border: 1.5px solid #3b82f6;
+      border-radius: 14px;
+      padding: 5px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .preset-btn:hover { background: #1e3a5f; }
+    .preset-btn.active { background: #3b82f6; color: #fff; }
+
+    /* ── Quality row ── */
+    .quality-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .quality-row label {
+      white-space: nowrap;
+      min-width: 92px;
+      font-size: 14px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    /* ── Format select ── */
+    select {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 14px;
+      width: 100%;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aaa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
+    /* ── Action buttons ── */
+    .action-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .action-btn:hover:not(:disabled) { background: #2563eb; }
+
+    .action-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: #1e1e1e;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      pointer-events: none;
+      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <h1>Image Compressor</h1>
+
+  <div class="splitter-wrap" id="splitterWrap">
+    <div class="panel" id="beforePanel">
+      <span class="panel-tag">Original</span>
+      <div class="panel-hint" id="beforeHint">
+        Drag &amp; drop an image here<br>or use Upload / Ctrl+V
+      </div>
+      <img id="beforeImg" alt="Original" />
+    </div>
+    <div class="splitter-handle" id="splitterHandle"></div>
+    <div class="panel" id="afterPanel">
+      <span class="panel-tag">Compressed</span>
+      <div class="panel-hint" id="afterHint">Compressed preview</div>
+      <img id="afterImg" alt="Compressed" />
+    </div>
+  </div>
+
+  <div class="meta-label" id="metaLabel"></div>
+  <div class="info-label" id="infoLabel"></div>
+
+  <div class="presets-row">
+    <span>Presets:</span>
+    <button class="preset-btn" data-fmt="webp" data-q="75">Web</button>
+    <button class="preset-btn" data-fmt="jpeg" data-q="82">Photo</button>
+    <button class="preset-btn" data-fmt="jpeg" data-q="55">Email</button>
+    <button class="preset-btn" data-fmt="png"  data-q="100">Lossless</button>
+  </div>
+
+  <div class="quality-row">
+    <label id="qualityLabel">Quality: 92</label>
+    <input type="range" id="qualitySlider" min="10" max="100" value="92" />
+  </div>
+
+  <select id="formatSelect">
+    <option value="webp">WEBP</option>
+    <option value="jpeg">JPEG</option>
+    <option value="png">PNG</option>
+  </select>
+
+  <div class="action-row">
+    <button class="action-btn" id="uploadBtn">Upload Image</button>
+    <button class="action-btn" id="copyBtn" disabled>Copy to Clipboard</button>
+    <button class="action-btn" id="saveBtn" disabled>Save Compressed</button>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" style="display:none" />
+  <canvas id="canvas" style="display:none"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── State ────────────────────────────────────────────────────────────────
+    let loadedImage   = null;   // HTMLImageElement
+    let originalSize  = 0;      // bytes of the original file
+    let compressedBlob = null;
+    let activePreset  = null;
+
+    const canvas       = document.getElementById('canvas');
+    const ctx          = canvas.getContext('2d');
+    const beforeImg    = document.getElementById('beforeImg');
+    const afterImg     = document.getElementById('afterImg');
+    const beforeHint   = document.getElementById('beforeHint');
+    const afterHint    = document.getElementById('afterHint');
+    const metaLabel    = document.getElementById('metaLabel');
+    const infoLabel    = document.getElementById('infoLabel');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityLabel = document.getElementById('qualityLabel');
+    const formatSelect = document.getElementById('formatSelect');
+    const copyBtn      = document.getElementById('copyBtn');
+    const saveBtn      = document.getElementById('saveBtn');
+
+    // ── Splitter drag ────────────────────────────────────────────────────────
+    const splitterWrap   = document.getElementById('splitterWrap');
+    const splitterHandle = document.getElementById('splitterHandle');
+    const beforePanel    = document.getElementById('beforePanel');
+    const afterPanel     = document.getElementById('afterPanel');
+    let dragging = false;
+
+    splitterHandle.addEventListener('mousedown', e => {
+      dragging = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const rect  = splitterWrap.getBoundingClientRect();
+      const handleW = splitterHandle.offsetWidth;
+      const total = rect.width - handleW;
+      const ratio = Math.min(Math.max((e.clientX - rect.left) / total, 0.08), 0.92);
+      beforePanel.style.flex = String(ratio);
+      afterPanel.style.flex  = String(1 - ratio);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    // ── Load image from File object ──────────────────────────────────────────
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      originalSize = file.size;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+
+          beforeImg.src = e.target.result;
+          beforeImg.style.display = 'block';
+          beforeHint.style.display = 'none';
+
+          const srcFmt = file.type.replace('image/', '').toUpperCase();
+          metaLabel.textContent =
+            `${img.naturalWidth} × ${img.naturalHeight} px   |   Source: ${srcFmt}   |   ${formatSize(originalSize)}`;
+
+          compress();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── Compress ─────────────────────────────────────────────────────────────
+    function compress() {
+      if (!loadedImage) return;
+
+      const quality  = parseInt(qualitySlider.value) / 100;
+      const fmt      = formatSelect.value;
+      const mimeType = `image/${fmt}`;
+
+      canvas.width  = loadedImage.naturalWidth;
+      canvas.height = loadedImage.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (fmt === 'jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(loadedImage, 0, 0);
+
+      // PNG ignores quality; pass 1 to avoid browser quirks
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        compressedBlob = blob;
+
+        const url = URL.createObjectURL(blob);
+        if (afterImg.src.startsWith('blob:')) URL.revokeObjectURL(afterImg.src);
+        afterImg.src = url;
+        afterImg.style.display = 'block';
+        afterHint.style.display = 'none';
+
+        copyBtn.disabled = false;
+        saveBtn.disabled = false;
+
+        const reduction = originalSize > 0
+          ? Math.max(0, 100 - (blob.size / originalSize * 100))
+          : 0;
+
+        infoLabel.textContent =
+          `Original: ${formatSize(originalSize)}   |   ` +
+          `Compressed: ${formatSize(blob.size)}   |   ` +
+          `Saved: ${reduction.toFixed(1)}%`;
+      }, mimeType, fmt === 'png' ? 1 : quality);
+    }
+
+    // ── Format size ──────────────────────────────────────────────────────────
+    function formatSize(b) {
+      if (b < 1024)           return `${b.toFixed(0)} B`;
+      if (b < 1024 * 1024)    return `${(b / 1024).toFixed(1)} KB`;
+      return `${(b / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    // ── Quality slider ───────────────────────────────────────────────────────
+    qualitySlider.addEventListener('input', () => {
+      qualityLabel.textContent = `Quality: ${qualitySlider.value}`;
+      clearPreset();
+      compress();
+    });
+
+    // ── Format select ────────────────────────────────────────────────────────
+    formatSelect.addEventListener('change', () => {
+      clearPreset();
+      compress();
+    });
+
+    // ── Presets ──────────────────────────────────────────────────────────────
+    function clearPreset() {
+      if (activePreset) { activePreset.classList.remove('active'); activePreset = null; }
+    }
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        clearPreset();
+        btn.classList.add('active');
+        activePreset = btn;
+        formatSelect.value    = btn.dataset.fmt;
+        qualitySlider.value   = btn.dataset.q;
+        qualityLabel.textContent = `Quality: ${btn.dataset.q}`;
+        compress();
+      });
+    });
+
+    // ── Upload button ────────────────────────────────────────────────────────
+    document.getElementById('uploadBtn').addEventListener('click', () =>
+      document.getElementById('fileInput').click()
+    );
+
+    document.getElementById('fileInput').addEventListener('change', e => {
+      loadFile(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    // ── Drag & drop (whole page) ─────────────────────────────────────────────
+    let dragCounter = 0;
+
+    document.addEventListener('dragenter', e => {
+      e.preventDefault();
+      dragCounter++;
+      if (hasImageFile(e.dataTransfer)) beforePanel.classList.add('drag-over');
+    });
+
+    document.addEventListener('dragleave', () => {
+      dragCounter--;
+      if (dragCounter <= 0) { dragCounter = 0; beforePanel.classList.remove('drag-over'); }
+    });
+
+    document.addEventListener('dragover', e => e.preventDefault());
+
+    document.addEventListener('drop', e => {
+      e.preventDefault();
+      dragCounter = 0;
+      beforePanel.classList.remove('drag-over');
+      const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+      if (file) loadFile(file);
+    });
+
+    function hasImageFile(dt) {
+      return dt && Array.from(dt.items || []).some(i => i.type.startsWith('image/'));
+    }
+
+    // ── Paste (Ctrl+V) ───────────────────────────────────────────────────────
+    document.addEventListener('paste', e => {
+      const item = Array.from(e.clipboardData.items || []).find(i => i.type.startsWith('image/'));
+      if (item) loadFile(item.getAsFile());
+    });
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+    saveBtn.addEventListener('click', () => {
+      if (!compressedBlob) return;
+      const ext = formatSelect.value === 'jpeg' ? 'jpg' : formatSelect.value;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(compressedBlob);
+      a.download = `compressed.${ext}`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    });
+
+    // ── Copy to clipboard ────────────────────────────────────────────────────
+    copyBtn.addEventListener('click', async () => {
+      if (!compressedBlob) return;
+      try {
+        // Browsers only reliably support image/png for clipboard write
+        let pngBlob = compressedBlob;
+        if (compressedBlob.type !== 'image/png') {
+          pngBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        }
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+        showToast('Copied to clipboard as PNG');
+      } catch (err) {
+        showToast('Clipboard write failed — use Save instead');
+      }
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
