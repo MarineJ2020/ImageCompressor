@@ -3,28 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Compressor</title>
+
+  <title>Free Image Compressor Online – No Upload, 100% Browser Based</title>
+  <meta name="description" content="Compress images online for free. Reduce image size without uploading to any server. 100% client-side JPEG, PNG & WebP optimizer — private, instant, no limits." />
+  <meta name="keywords" content="image compressor, compress images online, reduce image size, JPEG optimizer, PNG optimizer, WebP converter, client-side image compression, free image compressor" />
+  <link rel="canonical" href="https://marinej2020.github.io/ImageCompressor/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://marinej2020.github.io/ImageCompressor/" />
+  <meta property="og:title"       content="Free Image Compressor – No Upload, 100% Browser Based" />
+  <meta property="og:description" content="Compress JPEG, PNG and WebP images instantly in your browser. Your files never leave your device." />
+
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-R3ZWQJXVQ8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-R3ZWQJXVQ8');
+  </script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:      #121212;
+      --surface: #1e1e1e;
+      --border:  #333;
+      --blue:    #3b82f6;
+      --blue-h:  #2563eb;
+      --text:    #f0f0f0;
+      --muted:   #888;
+    }
+
     body {
-      background: #121212;
-      color: #fff;
+      background: var(--bg);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      padding: 20px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-width: 1400px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-brand svg { flex-shrink: 0; }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 52px 24px 36px;
+      max-width: 720px;
       margin: 0 auto;
     }
 
-    h1 {
-      text-align: center;
-      font-size: 22px;
-      font-weight: 600;
-      padding: 6px 0 2px;
+    .hero h1 {
+      font-size: clamp(22px, 4vw, 36px);
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span { color: var(--blue); }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 580px;
+      margin: 0 auto 24px;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge svg { color: var(--blue); }
+
+    /* ── App wrapper ── */
+    .app-wrap {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     /* ── Splitter ── */
@@ -38,45 +141,35 @@
 
     .panel {
       flex: 1;
-      border: 2px dashed #555;
+      border: 2px dashed #444;
       border-radius: 12px;
-      background: #1e1e1e;
+      background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       position: relative;
       min-width: 80px;
-      transition: border-color 0.15s, background 0.15s;
+      transition: border-color .15s, background .15s;
     }
 
-    .panel.drag-over {
-      border-color: #3b82f6;
-      background: #162032;
-    }
-
-    .panel img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: none;
-    }
+    .panel.drag-over { border-color: var(--blue); background: #162032; }
+    .panel img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
 
     .panel-hint {
-      color: #666;
+      color: #555;
       font-size: 14px;
       text-align: center;
       padding: 16px;
       pointer-events: none;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     .panel-tag {
       position: absolute;
-      top: 8px;
-      left: 10px;
-      background: rgba(0,0,0,0.55);
-      color: #aaa;
+      top: 8px; left: 10px;
+      background: rgba(0,0,0,.55);
+      color: var(--muted);
       font-size: 11px;
       padding: 2px 8px;
       border-radius: 20px;
@@ -86,79 +179,43 @@
     .splitter-handle {
       width: 6px;
       flex-shrink: 0;
-      background: #3b82f6;
+      background: var(--blue);
       cursor: col-resize;
       border-radius: 3px;
-      transition: background 0.15s;
+      transition: background .15s;
     }
-
     .splitter-handle:hover { background: #60a5fa; }
 
-    /* ── Labels ── */
-    .meta-label {
-      text-align: center;
-      color: #777;
-      font-size: 12px;
-      min-height: 18px;
-    }
-
-    .info-label {
-      text-align: center;
-      color: #fff;
-      font-size: 13px;
-      min-height: 20px;
-    }
+    /* ── Info labels ── */
+    .meta-label { text-align: center; color: var(--muted); font-size: 12px; min-height: 18px; }
+    .info-label  { text-align: center; color: var(--text);  font-size: 13px; min-height: 20px; }
 
     /* ── Presets ── */
-    .presets-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .presets-row span {
-      color: #888;
-      font-size: 13px;
-    }
+    .presets-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .presets-row > span { color: var(--muted); font-size: 13px; }
 
     .preset-btn {
       background: transparent;
-      color: #3b82f6;
-      border: 1.5px solid #3b82f6;
+      color: var(--blue);
+      border: 1.5px solid var(--blue);
       border-radius: 14px;
       padding: 5px 14px;
       font-size: 13px;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      transition: background .15s, color .15s;
     }
-
     .preset-btn:hover { background: #1e3a5f; }
-    .preset-btn.active { background: #3b82f6; color: #fff; }
+    .preset-btn.active { background: var(--blue); color: #fff; }
 
-    /* ── Quality row ── */
-    .quality-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    /* ── Quality ── */
+    .quality-row { display: flex; align-items: center; gap: 12px; }
+    .quality-row label { white-space: nowrap; min-width: 92px; font-size: 14px; }
+    input[type="range"] { flex: 1; accent-color: var(--blue); cursor: pointer; }
 
-    .quality-row label {
-      white-space: nowrap;
-      min-width: 92px;
-      font-size: 14px;
-    }
-
-    input[type="range"] {
-      flex: 1;
-      accent-color: #3b82f6;
-      cursor: pointer;
-    }
-
-    /* ── Format select ── */
+    /* ── Select ── */
     select {
       background: #2a2a2a;
-      color: #fff;
+      color: var(--text);
       border: 1px solid #444;
       border-radius: 8px;
       padding: 9px 12px;
@@ -170,130 +227,351 @@
       background-repeat: no-repeat;
       background-position: right 12px center;
     }
-
-    select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+    select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
 
     /* ── Action buttons ── */
-    .action-row {
-      display: flex;
-      gap: 10px;
-    }
+    .action-row { display: flex; gap: 10px; }
 
     .action-btn {
       flex: 1;
-      background: #3b82f6;
+      background: var(--blue);
       color: #fff;
       border: none;
       border-radius: 10px;
       padding: 12px;
       font-size: 14px;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background .15s;
+    }
+    .action-btn:hover:not(:disabled) { background: var(--blue-h); }
+    .action-btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+
+    /* ── Features section ── */
+    .features {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 64px 24px;
     }
 
-    .action-btn:hover:not(:disabled) { background: #2563eb; }
+    .features-inner { max-width: 1100px; margin: 0 auto; }
 
-    .action-btn:disabled {
-      background: #333;
-      color: #666;
-      cursor: not-allowed;
+    .section-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 44px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .feature-icon {
+      width: 40px; height: 40px;
+      background: #162032;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+      color: var(--blue);
+    }
+
+    .feature-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .feature-card p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── How it works ── */
+    .how {
+      padding: 64px 24px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .steps { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; }
+
+    .step {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .step h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .step p  { font-size: 13px; color: var(--muted); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
     }
 
     /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 28px;
-      left: 50%;
+      bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(70px);
-      background: #1e1e1e;
-      border: 1px solid #3b82f6;
-      color: #fff;
+      background: var(--surface);
+      border: 1px solid var(--blue);
+      color: var(--text);
       padding: 10px 22px;
       border-radius: 8px;
       font-size: 14px;
       pointer-events: none;
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1);
       z-index: 999;
       white-space: nowrap;
     }
-
     .toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-  <h1>Image Compressor</h1>
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/>
+      </svg>
+      ImageCompressor
+    </div>
+    <div class="nav-links">
+      <a href="#tool">Compress</a>
+      <a href="#how">How It Works</a>
+      <a href="#features">Features</a>
+    </div>
+  </nav>
 
-  <div class="splitter-wrap" id="splitterWrap">
-    <div class="panel" id="beforePanel">
-      <span class="panel-tag">Original</span>
-      <div class="panel-hint" id="beforeHint">
-        Drag &amp; drop an image here<br>or use Upload / Ctrl+V
+  <!-- Hero -->
+  <header class="hero">
+    <h1>Free Client-Side <span>Image Compressor</span><br>No Upload · 100% Browser Based</h1>
+    <p>
+      Compress images online instantly — reduce image size for JPEG, PNG, and WebP
+      without ever sending your files to a server. Pure client-side image compression
+      that keeps your data 100% private.
+    </p>
+    <div class="badges">
+      <span class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Files never leave your device
+      </span>
+      <span class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Instant compression
+      </span>
+      <span class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Completely free
+      </span>
+      <span class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Works offline
+      </span>
+    </div>
+  </header>
+
+  <!-- Tool -->
+  <main id="tool">
+    <div class="app-wrap">
+
+      <div class="splitter-wrap" id="splitterWrap">
+        <div class="panel" id="beforePanel">
+          <span class="panel-tag">Original</span>
+          <div class="panel-hint" id="beforeHint">
+            Drag &amp; drop an image here<br>or use <strong>Upload</strong> / <strong>Ctrl+V</strong>
+          </div>
+          <img id="beforeImg" alt="Original image preview" />
+        </div>
+        <div class="splitter-handle" id="splitterHandle"></div>
+        <div class="panel" id="afterPanel">
+          <span class="panel-tag">Compressed</span>
+          <div class="panel-hint" id="afterHint">Compressed preview will appear here</div>
+          <img id="afterImg" alt="Compressed image preview" />
+        </div>
       </div>
-      <img id="beforeImg" alt="Original" />
+
+      <div class="meta-label" id="metaLabel"></div>
+      <div class="info-label"  id="infoLabel"></div>
+
+      <div class="presets-row">
+        <span>Presets:</span>
+        <button class="preset-btn" data-fmt="webp" data-q="75" data-name="Web">Web</button>
+        <button class="preset-btn" data-fmt="jpeg" data-q="82" data-name="Photo">Photo</button>
+        <button class="preset-btn" data-fmt="jpeg" data-q="55" data-name="Email">Email</button>
+        <button class="preset-btn" data-fmt="png"  data-q="100" data-name="Lossless">Lossless</button>
+      </div>
+
+      <div class="quality-row">
+        <label id="qualityLabel">Quality: 92</label>
+        <input type="range" id="qualitySlider" min="10" max="100" value="92" />
+      </div>
+
+      <select id="formatSelect">
+        <option value="webp">WEBP – Best compression for web</option>
+        <option value="jpeg">JPEG – Great for photos</option>
+        <option value="png">PNG – Lossless, supports transparency</option>
+      </select>
+
+      <div class="action-row">
+        <button class="action-btn" id="uploadBtn">Upload Image</button>
+        <button class="action-btn" id="copyBtn" disabled>Copy to Clipboard</button>
+        <button class="action-btn" id="saveBtn" disabled>Save Compressed</button>
+      </div>
+
     </div>
-    <div class="splitter-handle" id="splitterHandle"></div>
-    <div class="panel" id="afterPanel">
-      <span class="panel-tag">Compressed</span>
-      <div class="panel-hint" id="afterHint">Compressed preview</div>
-      <img id="afterImg" alt="Compressed" />
+  </main>
+
+  <!-- How it works -->
+  <section id="how" class="how">
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Three steps to reduce image size — no account, no upload, no waiting.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Load your image</h3>
+          <p>Drag &amp; drop, paste from clipboard (Ctrl+V), or click Upload. Supports JPEG, PNG, and WebP input files of any size.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Choose quality &amp; format</h3>
+          <p>Use a preset (Web, Photo, Email, Lossless) or fine-tune the quality slider. Switch between WebP, JPEG, and PNG output formats. The before/after comparison updates instantly so you can judge quality loss at a glance.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Save or copy the result</h3>
+          <p>Download the compressed file directly or copy it to your clipboard. All client-side image compression runs entirely in your browser — nothing is ever uploaded.</p>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="meta-label" id="metaLabel"></div>
-  <div class="info-label" id="infoLabel"></div>
+  <!-- Features -->
+  <section id="features" class="features">
+    <div class="features-inner">
+      <h2 class="section-title">Why Use This Image Compressor?</h2>
+      <p class="section-sub">A fast, private, and flexible way to compress images online — for free.</p>
+      <div class="feature-grid">
 
-  <div class="presets-row">
-    <span>Presets:</span>
-    <button class="preset-btn" data-fmt="webp" data-q="75">Web</button>
-    <button class="preset-btn" data-fmt="jpeg" data-q="82">Photo</button>
-    <button class="preset-btn" data-fmt="jpeg" data-q="55">Email</button>
-    <button class="preset-btn" data-fmt="png"  data-q="100">Lossless</button>
-  </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>100% Private</h3>
+          <p>Your images are processed entirely in the browser using the Canvas API. No server, no cloud, no data ever leaves your device.</p>
+        </div>
 
-  <div class="quality-row">
-    <label id="qualityLabel">Quality: 92</label>
-    <input type="range" id="qualitySlider" min="10" max="100" value="92" />
-  </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>Instant Results</h3>
+          <p>Client-side image compression means no waiting for uploads or server queues. Results appear as you move the quality slider.</p>
+        </div>
 
-  <select id="formatSelect">
-    <option value="webp">WEBP</option>
-    <option value="jpeg">JPEG</option>
-    <option value="png">PNG</option>
-  </select>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h4"/></svg>
+          </div>
+          <h3>JPEG, PNG &amp; WebP</h3>
+          <p>Full JPEG optimizer, lossless PNG compression, and next-gen WebP output. Pick the format that fits your use case — web, email, or archival.</p>
+        </div>
 
-  <div class="action-row">
-    <button class="action-btn" id="uploadBtn">Upload Image</button>
-    <button class="action-btn" id="copyBtn" disabled>Copy to Clipboard</button>
-    <button class="action-btn" id="saveBtn" disabled>Save Compressed</button>
-  </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6l11 6 11-6M1 6v12l11 6 11-6V6"/></svg>
+          </div>
+          <h3>Smart Presets</h3>
+          <p>One-click presets for common use cases: Web (WebP 75%), Photo (JPEG 82%), Email (JPEG 55%), and Lossless PNG — reduce image size with zero guesswork.</p>
+        </div>
 
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Works Offline</h3>
+          <p>Once the page is loaded, this online image compressor works entirely offline. No internet connection needed for compression.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3>Always Free</h3>
+          <p>No sign-up, no watermarks, no file size limits, no ads. Just a straightforward tool to compress images online without friction.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 ImageCompressor · Free client-side image compression · <a href="sitemap.xml">Sitemap</a></p>
+  </footer>
+
+  <!-- Hidden elements -->
   <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" style="display:none" />
   <canvas id="canvas" style="display:none"></canvas>
   <div class="toast" id="toast"></div>
 
   <script>
+    // ── GA4 helpers ──────────────────────────────────────────────────────────
+    function track(eventName, params) {
+      if (typeof gtag === 'function') gtag('event', eventName, params || {});
+    }
+
     // ── State ────────────────────────────────────────────────────────────────
-    let loadedImage   = null;   // HTMLImageElement
-    let originalSize  = 0;      // bytes of the original file
+    let loadedImage    = null;
+    let originalSize   = 0;
     let compressedBlob = null;
-    let activePreset  = null;
+    let activePreset   = null;
 
-    const canvas       = document.getElementById('canvas');
-    const ctx          = canvas.getContext('2d');
-    const beforeImg    = document.getElementById('beforeImg');
-    const afterImg     = document.getElementById('afterImg');
-    const beforeHint   = document.getElementById('beforeHint');
-    const afterHint    = document.getElementById('afterHint');
-    const metaLabel    = document.getElementById('metaLabel');
-    const infoLabel    = document.getElementById('infoLabel');
+    const canvas        = document.getElementById('canvas');
+    const ctx           = canvas.getContext('2d');
+    const beforeImg     = document.getElementById('beforeImg');
+    const afterImg      = document.getElementById('afterImg');
+    const beforeHint    = document.getElementById('beforeHint');
+    const afterHint     = document.getElementById('afterHint');
+    const metaLabel     = document.getElementById('metaLabel');
+    const infoLabel     = document.getElementById('infoLabel');
     const qualitySlider = document.getElementById('qualitySlider');
-    const qualityLabel = document.getElementById('qualityLabel');
-    const formatSelect = document.getElementById('formatSelect');
-    const copyBtn      = document.getElementById('copyBtn');
-    const saveBtn      = document.getElementById('saveBtn');
+    const qualityLabel  = document.getElementById('qualityLabel');
+    const formatSelect  = document.getElementById('formatSelect');
+    const copyBtn       = document.getElementById('copyBtn');
+    const saveBtn       = document.getElementById('saveBtn');
 
-    // ── Splitter drag ────────────────────────────────────────────────────────
+    // ── Splitter ─────────────────────────────────────────────────────────────
     const splitterWrap   = document.getElementById('splitterWrap');
     const splitterHandle = document.getElementById('splitterHandle');
     const beforePanel    = document.getElementById('beforePanel');
@@ -306,17 +584,14 @@
       document.body.style.userSelect = 'none';
       e.preventDefault();
     });
-
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
       const rect  = splitterWrap.getBoundingClientRect();
-      const handleW = splitterHandle.offsetWidth;
-      const total = rect.width - handleW;
+      const total = rect.width - splitterHandle.offsetWidth;
       const ratio = Math.min(Math.max((e.clientX - rect.left) / total, 0.08), 0.92);
       beforePanel.style.flex = String(ratio);
       afterPanel.style.flex  = String(1 - ratio);
     });
-
     document.addEventListener('mouseup', () => {
       if (!dragging) return;
       dragging = false;
@@ -324,8 +599,8 @@
       document.body.style.userSelect = '';
     });
 
-    // ── Load image from File object ──────────────────────────────────────────
-    function loadFile(file) {
+    // ── Load image ───────────────────────────────────────────────────────────
+    function loadFile(file, method) {
       if (!file || !file.type.startsWith('image/')) return;
       originalSize = file.size;
 
@@ -334,14 +609,21 @@
         const img = new Image();
         img.onload = () => {
           loadedImage = img;
-
           beforeImg.src = e.target.result;
           beforeImg.style.display = 'block';
           beforeHint.style.display = 'none';
 
           const srcFmt = file.type.replace('image/', '').toUpperCase();
           metaLabel.textContent =
-            `${img.naturalWidth} × ${img.naturalHeight} px   |   Source: ${srcFmt}   |   ${formatSize(originalSize)}`;
+            `${img.naturalWidth} × ${img.naturalHeight} px  ·  Source: ${srcFmt}  ·  ${formatSize(originalSize)}`;
+
+          track('image_loaded', {
+            method:        method,         // 'upload' | 'drop' | 'paste'
+            source_format: srcFmt,
+            width:         img.naturalWidth,
+            height:        img.naturalHeight,
+            file_size_kb:  Math.round(originalSize / 1024),
+          });
 
           compress();
         };
@@ -366,10 +648,8 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-
       ctx.drawImage(loadedImage, 0, 0);
 
-      // PNG ignores quality; pass 1 to avoid browser quirks
       canvas.toBlob(blob => {
         if (!blob) return;
         compressedBlob = blob;
@@ -388,29 +668,29 @@
           : 0;
 
         infoLabel.textContent =
-          `Original: ${formatSize(originalSize)}   |   ` +
-          `Compressed: ${formatSize(blob.size)}   |   ` +
+          `Original: ${formatSize(originalSize)}  ·  ` +
+          `Compressed: ${formatSize(blob.size)}  ·  ` +
           `Saved: ${reduction.toFixed(1)}%`;
       }, mimeType, fmt === 'png' ? 1 : quality);
     }
 
     // ── Format size ──────────────────────────────────────────────────────────
     function formatSize(b) {
-      if (b < 1024)           return `${b.toFixed(0)} B`;
-      if (b < 1024 * 1024)    return `${(b / 1024).toFixed(1)} KB`;
-      return `${(b / 1024 / 1024).toFixed(2)} MB`;
+      if (b < 1024)        return `${b} B`;
+      if (b < 1048576)     return `${(b / 1024).toFixed(1)} KB`;
+      return `${(b / 1048576).toFixed(2)} MB`;
     }
 
-    // ── Quality slider ───────────────────────────────────────────────────────
+    // ── Controls ─────────────────────────────────────────────────────────────
     qualitySlider.addEventListener('input', () => {
       qualityLabel.textContent = `Quality: ${qualitySlider.value}`;
       clearPreset();
       compress();
     });
 
-    // ── Format select ────────────────────────────────────────────────────────
     formatSelect.addEventListener('change', () => {
       clearPreset();
+      track('format_changed', { format: formatSelect.value });
       compress();
     });
 
@@ -424,80 +704,86 @@
         clearPreset();
         btn.classList.add('active');
         activePreset = btn;
-        formatSelect.value    = btn.dataset.fmt;
-        qualitySlider.value   = btn.dataset.q;
-        qualityLabel.textContent = `Quality: ${btn.dataset.q}`;
+        formatSelect.value            = btn.dataset.fmt;
+        qualitySlider.value           = btn.dataset.q;
+        qualityLabel.textContent      = `Quality: ${btn.dataset.q}`;
+        track('preset_selected', {
+          preset_name: btn.dataset.name,
+          format:      btn.dataset.fmt,
+          quality:     parseInt(btn.dataset.q),
+        });
         compress();
       });
     });
 
-    // ── Upload button ────────────────────────────────────────────────────────
+    // ── Upload ───────────────────────────────────────────────────────────────
     document.getElementById('uploadBtn').addEventListener('click', () =>
       document.getElementById('fileInput').click()
     );
-
     document.getElementById('fileInput').addEventListener('change', e => {
-      loadFile(e.target.files[0]);
+      loadFile(e.target.files[0], 'upload');
       e.target.value = '';
     });
 
-    // ── Drag & drop (whole page) ─────────────────────────────────────────────
-    let dragCounter = 0;
-
+    // ── Drag & drop ──────────────────────────────────────────────────────────
+    let dragCount = 0;
     document.addEventListener('dragenter', e => {
       e.preventDefault();
-      dragCounter++;
-      if (hasImageFile(e.dataTransfer)) beforePanel.classList.add('drag-over');
+      dragCount++;
+      if (hasImage(e.dataTransfer)) beforePanel.classList.add('drag-over');
     });
-
     document.addEventListener('dragleave', () => {
-      dragCounter--;
-      if (dragCounter <= 0) { dragCounter = 0; beforePanel.classList.remove('drag-over'); }
+      if (--dragCount <= 0) { dragCount = 0; beforePanel.classList.remove('drag-over'); }
     });
-
     document.addEventListener('dragover', e => e.preventDefault());
-
     document.addEventListener('drop', e => {
       e.preventDefault();
-      dragCounter = 0;
+      dragCount = 0;
       beforePanel.classList.remove('drag-over');
       const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
-      if (file) loadFile(file);
+      if (file) loadFile(file, 'drop');
     });
-
-    function hasImageFile(dt) {
+    function hasImage(dt) {
       return dt && Array.from(dt.items || []).some(i => i.type.startsWith('image/'));
     }
 
-    // ── Paste (Ctrl+V) ───────────────────────────────────────────────────────
+    // ── Paste ────────────────────────────────────────────────────────────────
     document.addEventListener('paste', e => {
       const item = Array.from(e.clipboardData.items || []).find(i => i.type.startsWith('image/'));
-      if (item) loadFile(item.getAsFile());
+      if (item) loadFile(item.getAsFile(), 'paste');
     });
 
     // ── Save ─────────────────────────────────────────────────────────────────
     saveBtn.addEventListener('click', () => {
       if (!compressedBlob) return;
       const ext = formatSelect.value === 'jpeg' ? 'jpg' : formatSelect.value;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(compressedBlob);
+      const a   = document.createElement('a');
+      a.href     = URL.createObjectURL(compressedBlob);
       a.download = `compressed.${ext}`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      track('image_downloaded', {
+        format:       formatSelect.value,
+        quality:      parseInt(qualitySlider.value),
+        file_size_kb: Math.round(compressedBlob.size / 1024),
+        savings_pct:  originalSize > 0
+          ? parseFloat(Math.max(0, 100 - compressedBlob.size / originalSize * 100).toFixed(1))
+          : 0,
+      });
     });
 
     // ── Copy to clipboard ────────────────────────────────────────────────────
     copyBtn.addEventListener('click', async () => {
       if (!compressedBlob) return;
       try {
-        // Browsers only reliably support image/png for clipboard write
-        let pngBlob = compressedBlob;
+        let blobToWrite = compressedBlob;
         if (compressedBlob.type !== 'image/png') {
-          pngBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+          blobToWrite = await new Promise(res => canvas.toBlob(res, 'image/png'));
         }
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobToWrite })]);
         showToast('Copied to clipboard as PNG');
-      } catch (err) {
+        track('image_copied', { format: formatSelect.value });
+      } catch {
         showToast('Clipboard write failed — use Save instead');
       }
     });
