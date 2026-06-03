@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://marinej2020.github.io/ImageCompressor/sitemap.xml
