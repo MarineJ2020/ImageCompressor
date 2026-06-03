@@ -207,6 +207,45 @@
     .preset-btn:hover { background: #1e3a5f; }
     .preset-btn.active { background: var(--blue); color: #fff; }
 
+    /* ── Scale ── */
+    .scale-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .scale-row > span { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+    .scale-btn {
+      background: transparent;
+      color: var(--blue);
+      border: 1.5px solid var(--blue);
+      border-radius: 14px;
+      padding: 5px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .scale-btn:hover { background: #1e3a5f; }
+    .scale-btn.active { background: var(--blue); color: #fff; }
+
+    .scale-custom-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .scale-custom-wrap input[type="number"] {
+      width: 68px;
+      background: #2a2a2a;
+      color: var(--text);
+      border: 1.5px solid #444;
+      border-radius: 14px;
+      padding: 5px 10px;
+      font-size: 13px;
+      text-align: center;
+      -moz-appearance: textfield;
+    }
+    .scale-custom-wrap input[type="number"]::-webkit-outer-spin-button,
+    .scale-custom-wrap input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .scale-custom-wrap input[type="number"]:focus { outline: 2px solid var(--blue); border-color: var(--blue); }
+    .scale-custom-wrap span { color: var(--muted); font-size: 13px; }
+
     /* ── Quality ── */
     .quality-row { display: flex; align-items: center; gap: 12px; }
     .quality-row label { white-space: nowrap; min-width: 92px; font-size: 14px; }
@@ -427,6 +466,18 @@
         <button class="preset-btn" data-fmt="png"  data-q="100" data-name="Lossless">Lossless</button>
       </div>
 
+      <div class="scale-row">
+        <span>Scale:</span>
+        <button class="scale-btn active" data-scale="1">1×</button>
+        <button class="scale-btn" data-scale="0.75">0.75×</button>
+        <button class="scale-btn" data-scale="0.5">0.5×</button>
+        <button class="scale-btn" data-scale="0.25">0.25×</button>
+        <div class="scale-custom-wrap">
+          <input type="number" id="scaleCustom" min="0.01" max="1" step="0.01" value="1" placeholder="1" />
+          <span>×</span>
+        </div>
+      </div>
+
       <div class="quality-row">
         <label id="qualityLabel">Quality: 92</label>
         <input type="range" id="qualitySlider" min="10" max="100" value="92" />
@@ -556,6 +607,8 @@
     let originalSize   = 0;
     let compressedBlob = null;
     let activePreset   = null;
+    let currentScale   = 1.0;
+    let activeScaleBtn = document.querySelector('.scale-btn.active');
 
     const canvas        = document.getElementById('canvas');
     const ctx           = canvas.getContext('2d');
@@ -632,6 +685,28 @@
       reader.readAsDataURL(file);
     }
 
+    // ── Scale controls ───────────────────────────────────────────────────────
+    const scaleCustom = document.getElementById('scaleCustom');
+
+    function setScale(val, sourceBtn) {
+      currentScale = Math.min(1, Math.max(0.01, val));
+      scaleCustom.value = currentScale;
+      if (activeScaleBtn) activeScaleBtn.classList.remove('active');
+      activeScaleBtn = sourceBtn || null;
+      if (activeScaleBtn) activeScaleBtn.classList.add('active');
+      track('scale_changed', { scale: currentScale });
+      compress();
+    }
+
+    document.querySelectorAll('.scale-btn').forEach(btn => {
+      btn.addEventListener('click', () => setScale(parseFloat(btn.dataset.scale), btn));
+    });
+
+    scaleCustom.addEventListener('change', () => {
+      const val = parseFloat(scaleCustom.value);
+      if (!isNaN(val) && val > 0) setScale(val, null);
+    });
+
     // ── Compress ─────────────────────────────────────────────────────────────
     function compress() {
       if (!loadedImage) return;
@@ -640,15 +715,18 @@
       const fmt      = formatSelect.value;
       const mimeType = `image/${fmt}`;
 
-      canvas.width  = loadedImage.naturalWidth;
-      canvas.height = loadedImage.naturalHeight;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const outW = Math.max(1, Math.round(loadedImage.naturalWidth  * currentScale));
+      const outH = Math.max(1, Math.round(loadedImage.naturalHeight * currentScale));
+
+      canvas.width  = outW;
+      canvas.height = outH;
+      ctx.clearRect(0, 0, outW, outH);
 
       if (fmt === 'jpeg') {
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, outW, outH);
       }
-      ctx.drawImage(loadedImage, 0, 0);
+      ctx.drawImage(loadedImage, 0, 0, outW, outH);
 
       canvas.toBlob(blob => {
         if (!blob) return;
@@ -667,10 +745,12 @@
           ? Math.max(0, 100 - (blob.size / originalSize * 100))
           : 0;
 
+        const scaleInfo = currentScale < 1 ? `  ·  Output: ${outW} × ${outH} px` : '';
+
         infoLabel.textContent =
           `Original: ${formatSize(originalSize)}  ·  ` +
           `Compressed: ${formatSize(blob.size)}  ·  ` +
-          `Saved: ${reduction.toFixed(1)}%`;
+          `Saved: ${reduction.toFixed(1)}%` + scaleInfo;
       }, mimeType, fmt === 'png' ? 1 : quality);
     }
 
