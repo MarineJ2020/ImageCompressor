@@ -285,6 +285,73 @@
     .action-btn:hover:not(:disabled) { background: var(--blue-h); }
     .action-btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
 
+    .action-btn.secondary {
+      background: transparent;
+      border: 1.5px solid var(--blue);
+      color: var(--blue);
+    }
+    .action-btn.secondary:hover:not(:disabled) { background: #1e3a5f; }
+
+    /* ── Batch strip ── */
+    .batch-summary {
+      text-align: center;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 600;
+      min-height: 18px;
+    }
+
+    .batch-strip {
+      display: none;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 2px 10px;
+      scrollbar-width: thin;
+    }
+
+    .thumb {
+      position: relative;
+      flex: 0 0 auto;
+      width: 92px;
+      height: 92px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      background: var(--surface);
+      transition: border-color .15s;
+    }
+    .thumb.selected { border-color: var(--blue); }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .thumb-badge {
+      position: absolute;
+      bottom: 4px; left: 4px;
+      background: rgba(0,0,0,.72);
+      color: #fff;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      pointer-events: none;
+    }
+
+    .thumb-remove {
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-remove:hover { background: #e11d48; }
+
     /* ── Features section ── */
     .features {
       background: var(--surface);
@@ -443,7 +510,7 @@
         <div class="panel" id="beforePanel">
           <span class="panel-tag">Original</span>
           <div class="panel-hint" id="beforeHint">
-            Drag &amp; drop an image here<br>or use <strong>Upload</strong> / <strong>Ctrl+V</strong>
+            Drag &amp; drop one or more images<br>or use <strong>Upload</strong> / <strong>Ctrl+V</strong><br><small style="color:#555">Batch supported</small>
           </div>
           <img id="beforeImg" alt="Original image preview" />
         </div>
@@ -457,6 +524,9 @@
 
       <div class="meta-label" id="metaLabel"></div>
       <div class="info-label"  id="infoLabel"></div>
+
+      <div class="batch-summary" id="batchSummary"></div>
+      <div class="batch-strip"   id="batchStrip"></div>
 
       <div class="presets-row">
         <span>Presets:</span>
@@ -490,9 +560,10 @@
       </select>
 
       <div class="action-row">
-        <button class="action-btn" id="uploadBtn">Upload Image</button>
+        <button class="action-btn" id="uploadBtn">Upload Images</button>
         <button class="action-btn" id="copyBtn" disabled>Copy to Clipboard</button>
         <button class="action-btn" id="saveBtn" disabled>Save Compressed</button>
+        <button class="action-btn secondary" id="downloadAllBtn" style="display:none">Download All (ZIP)</button>
       </div>
 
     </div>
@@ -506,8 +577,8 @@
       <div class="step">
         <div class="step-num">1</div>
         <div>
-          <h3>Load your image</h3>
-          <p>Drag &amp; drop, paste from clipboard (Ctrl+V), or click Upload. Supports JPEG, PNG, and WebP input files of any size.</p>
+          <h3>Load your images</h3>
+          <p>Drag &amp; drop one or many files at once, paste from clipboard (Ctrl+V), or click Upload. Batch processing lets you compress dozens of JPEG, PNG, and WebP images in a single pass.</p>
         </div>
       </div>
       <div class="step">
@@ -520,8 +591,8 @@
       <div class="step">
         <div class="step-num">3</div>
         <div>
-          <h3>Save or copy the result</h3>
-          <p>Download the compressed file directly or copy it to your clipboard. All client-side image compression runs entirely in your browser — nothing is ever uploaded.</p>
+          <h3>Save, copy, or download all</h3>
+          <p>Download a single compressed file, copy it to your clipboard, or grab every image at once as a ZIP. All client-side image compression runs entirely in your browser — nothing is ever uploaded.</p>
         </div>
       </div>
     </div>
@@ -582,6 +653,14 @@
           <p>No sign-up, no watermarks, no file size limits, no ads. Just a straightforward tool to compress images online without friction.</p>
         </div>
 
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <h3>Batch Processing</h3>
+          <p>Drop a whole folder of images and compress them all at once with the same settings. Download every result in a single ZIP — bulk image compression made effortless.</p>
+        </div>
+
       </div>
     </div>
   </section>
@@ -592,7 +671,7 @@
   </footer>
 
   <!-- Hidden elements -->
-  <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" style="display:none" />
+  <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" multiple style="display:none" />
   <canvas id="canvas" style="display:none"></canvas>
   <div class="toast" id="toast"></div>
 
@@ -603,12 +682,12 @@
     }
 
     // ── State ────────────────────────────────────────────────────────────────
-    let loadedImage    = null;
-    let originalSize   = 0;
-    let compressedBlob = null;
+    let items          = [];     // { file, img, name, originalSize, srcFmt, dataUrl, blob, outW, outH }
+    let activeIndex    = -1;
     let activePreset   = null;
     let currentScale   = 1.0;
     let activeScaleBtn = document.querySelector('.scale-btn.active');
+    let afterUrl       = null;   // object URL currently shown in the after panel
 
     const canvas        = document.getElementById('canvas');
     const ctx           = canvas.getContext('2d');
@@ -618,11 +697,16 @@
     const afterHint     = document.getElementById('afterHint');
     const metaLabel     = document.getElementById('metaLabel');
     const infoLabel     = document.getElementById('infoLabel');
+    const batchSummary  = document.getElementById('batchSummary');
+    const batchStrip    = document.getElementById('batchStrip');
     const qualitySlider = document.getElementById('qualitySlider');
     const qualityLabel  = document.getElementById('qualityLabel');
     const formatSelect  = document.getElementById('formatSelect');
     const copyBtn       = document.getElementById('copyBtn');
     const saveBtn       = document.getElementById('saveBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+    const activeItem = () => items[activeIndex];
 
     // ── Splitter ─────────────────────────────────────────────────────────────
     const splitterWrap   = document.getElementById('splitterWrap');
@@ -652,37 +736,195 @@
       document.body.style.userSelect = '';
     });
 
-    // ── Load image ───────────────────────────────────────────────────────────
-    function loadFile(file, method) {
-      if (!file || !file.type.startsWith('image/')) return;
-      originalSize = file.size;
+    // ── Load images (batch-capable) ──────────────────────────────────────────
+    function loadFiles(fileList, method) {
+      const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+      if (!files.length) return;
 
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          loadedImage = img;
-          beforeImg.src = e.target.result;
-          beforeImg.style.display = 'block';
-          beforeHint.style.display = 'none';
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = async () => {
+            const item = {
+              file,
+              img,
+              name:         file.name || 'image',
+              originalSize: file.size,
+              srcFmt:       (file.type.replace('image/', '') || '').toUpperCase(),
+              dataUrl:      e.target.result,
+              blob:         null,
+              outW:         0,
+              outH:         0,
+            };
+            items.push(item);
+            if (activeIndex === -1) activeIndex = items.indexOf(item);
+            await compressItem(item);
+            renderAll();
 
-          const srcFmt = file.type.replace('image/', '').toUpperCase();
-          metaLabel.textContent =
-            `${img.naturalWidth} × ${img.naturalHeight} px  ·  Source: ${srcFmt}  ·  ${formatSize(originalSize)}`;
-
-          track('image_loaded', {
-            method:        method,         // 'upload' | 'drop' | 'paste'
-            source_format: srcFmt,
-            width:         img.naturalWidth,
-            height:        img.naturalHeight,
-            file_size_kb:  Math.round(originalSize / 1024),
-          });
-
-          compress();
+            track('image_loaded', {
+              method:        method,        // 'upload' | 'drop' | 'paste'
+              source_format: item.srcFmt,
+              width:         img.naturalWidth,
+              height:        img.naturalHeight,
+              file_size_kb:  Math.round(file.size / 1024),
+            });
+          };
+          img.src = e.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ── Compress a single item with current settings ─────────────────────────
+    function compressItem(item) {
+      return new Promise(resolve => {
+        const quality  = parseInt(qualitySlider.value) / 100;
+        const fmt      = formatSelect.value;
+        const mimeType = `image/${fmt}`;
+
+        const outW = Math.max(1, Math.round(item.img.naturalWidth  * currentScale));
+        const outH = Math.max(1, Math.round(item.img.naturalHeight * currentScale));
+
+        canvas.width  = outW;
+        canvas.height = outH;
+        ctx.clearRect(0, 0, outW, outH);
+        if (fmt === 'jpeg') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, outW, outH);
+        }
+        ctx.drawImage(item.img, 0, 0, outW, outH);
+
+        canvas.toBlob(blob => {
+          item.blob = blob;
+          item.outW = outW;
+          item.outH = outH;
+          resolve();
+        }, mimeType, fmt === 'png' ? 1 : quality);
+      });
+    }
+
+    // ── Recompress every item (settings changed) ─────────────────────────────
+    async function compressAll() {
+      if (!items.length) return;
+      for (const item of items) await compressItem(item);
+      renderAll();
+    }
+
+    // ── Render the active before/after view ──────────────────────────────────
+    function renderActive() {
+      const item = activeItem();
+      if (!item) return;
+
+      beforeImg.src = item.dataUrl;
+      beforeImg.style.display = 'block';
+      beforeHint.style.display = 'none';
+
+      if (item.blob) {
+        if (afterUrl) URL.revokeObjectURL(afterUrl);
+        afterUrl = URL.createObjectURL(item.blob);
+        afterImg.src = afterUrl;
+        afterImg.style.display = 'block';
+        afterHint.style.display = 'none';
+
+        const reduction = item.originalSize > 0
+          ? Math.max(0, 100 - (item.blob.size / item.originalSize * 100)) : 0;
+        const scaleInfo = currentScale < 1 ? `  ·  Output: ${item.outW} × ${item.outH} px` : '';
+
+        infoLabel.textContent =
+          `Original: ${formatSize(item.originalSize)}  ·  ` +
+          `Compressed: ${formatSize(item.blob.size)}  ·  ` +
+          `Saved: ${reduction.toFixed(1)}%` + scaleInfo;
+      }
+
+      const prefix = items.length > 1 ? `${item.name}  ·  ` : '';
+      metaLabel.textContent =
+        `${prefix}${item.img.naturalWidth} × ${item.img.naturalHeight} px  ·  Source: ${item.srcFmt}  ·  ${formatSize(item.originalSize)}`;
+    }
+
+    // ── Render the batch thumbnail strip + summary ───────────────────────────
+    function renderStrip() {
+      if (items.length <= 1) {
+        batchStrip.style.display = 'none';
+        batchSummary.style.display = 'none';
+        downloadAllBtn.style.display = 'none';
+        return;
+      }
+
+      batchStrip.style.display = 'flex';
+      batchSummary.style.display = 'block';
+      downloadAllBtn.style.display = '';
+      downloadAllBtn.textContent = `Download All (${items.length}) ZIP`;
+
+      batchStrip.innerHTML = '';
+      let totalOrig = 0, totalComp = 0;
+
+      items.forEach((item, i) => {
+        totalOrig += item.originalSize;
+        totalComp += item.blob ? item.blob.size : item.originalSize;
+
+        const reduction = item.blob && item.originalSize > 0
+          ? Math.max(0, 100 - (item.blob.size / item.originalSize * 100)) : 0;
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb' + (i === activeIndex ? ' selected' : '');
+        thumb.innerHTML =
+          `<img src="${item.dataUrl}" alt="${item.name}">` +
+          `<span class="thumb-badge">-${reduction.toFixed(0)}%</span>` +
+          `<button class="thumb-remove" title="Remove">×</button>`;
+
+        thumb.addEventListener('click', () => {
+          activeIndex = i;
+          renderActive();
+          renderStrip();
+        });
+        thumb.querySelector('.thumb-remove').addEventListener('click', ev => {
+          ev.stopPropagation();
+          removeItem(i);
+        });
+        batchStrip.appendChild(thumb);
+      });
+
+      const totalSaved = totalOrig > 0 ? Math.max(0, 100 - (totalComp / totalOrig * 100)) : 0;
+      batchSummary.textContent =
+        `${items.length} images  ·  ${formatSize(totalOrig)} → ${formatSize(totalComp)}  ·  Saved ${totalSaved.toFixed(1)}%`;
+    }
+
+    function renderAll() {
+      const has = items.length > 0;
+      copyBtn.disabled = !has;
+      saveBtn.disabled = !has;
+      renderActive();
+      renderStrip();
+    }
+
+    function removeItem(i) {
+      items.splice(i, 1);
+      if (items.length === 0) { resetEmpty(); return; }
+      if (activeIndex >= items.length) activeIndex = items.length - 1;
+      renderAll();
+    }
+
+    function resetEmpty() {
+      items = [];
+      activeIndex = -1;
+      if (afterUrl) { URL.revokeObjectURL(afterUrl); afterUrl = null; }
+      beforeImg.style.display = 'none';
+      afterImg.style.display  = 'none';
+      beforeHint.style.display = 'block';
+      afterHint.style.display  = 'block';
+      metaLabel.textContent = '';
+      infoLabel.textContent = '';
+      copyBtn.disabled = true;
+      saveBtn.disabled = true;
+      renderStrip();
+    }
+
+    // ── Format size ──────────────────────────────────────────────────────────
+    function formatSize(b) {
+      if (b < 1024)        return `${b} B`;
+      if (b < 1048576)     return `${(b / 1024).toFixed(1)} KB`;
+      return `${(b / 1048576).toFixed(2)} MB`;
     }
 
     // ── Scale controls ───────────────────────────────────────────────────────
@@ -695,7 +937,7 @@
       activeScaleBtn = sourceBtn || null;
       if (activeScaleBtn) activeScaleBtn.classList.add('active');
       track('scale_changed', { scale: currentScale });
-      compress();
+      compressAll();
     }
 
     document.querySelectorAll('.scale-btn').forEach(btn => {
@@ -707,71 +949,17 @@
       if (!isNaN(val) && val > 0) setScale(val, null);
     });
 
-    // ── Compress ─────────────────────────────────────────────────────────────
-    function compress() {
-      if (!loadedImage) return;
-
-      const quality  = parseInt(qualitySlider.value) / 100;
-      const fmt      = formatSelect.value;
-      const mimeType = `image/${fmt}`;
-
-      const outW = Math.max(1, Math.round(loadedImage.naturalWidth  * currentScale));
-      const outH = Math.max(1, Math.round(loadedImage.naturalHeight * currentScale));
-
-      canvas.width  = outW;
-      canvas.height = outH;
-      ctx.clearRect(0, 0, outW, outH);
-
-      if (fmt === 'jpeg') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, outW, outH);
-      }
-      ctx.drawImage(loadedImage, 0, 0, outW, outH);
-
-      canvas.toBlob(blob => {
-        if (!blob) return;
-        compressedBlob = blob;
-
-        const url = URL.createObjectURL(blob);
-        if (afterImg.src.startsWith('blob:')) URL.revokeObjectURL(afterImg.src);
-        afterImg.src = url;
-        afterImg.style.display = 'block';
-        afterHint.style.display = 'none';
-
-        copyBtn.disabled = false;
-        saveBtn.disabled = false;
-
-        const reduction = originalSize > 0
-          ? Math.max(0, 100 - (blob.size / originalSize * 100))
-          : 0;
-
-        const scaleInfo = currentScale < 1 ? `  ·  Output: ${outW} × ${outH} px` : '';
-
-        infoLabel.textContent =
-          `Original: ${formatSize(originalSize)}  ·  ` +
-          `Compressed: ${formatSize(blob.size)}  ·  ` +
-          `Saved: ${reduction.toFixed(1)}%` + scaleInfo;
-      }, mimeType, fmt === 'png' ? 1 : quality);
-    }
-
-    // ── Format size ──────────────────────────────────────────────────────────
-    function formatSize(b) {
-      if (b < 1024)        return `${b} B`;
-      if (b < 1048576)     return `${(b / 1024).toFixed(1)} KB`;
-      return `${(b / 1048576).toFixed(2)} MB`;
-    }
-
     // ── Controls ─────────────────────────────────────────────────────────────
     qualitySlider.addEventListener('input', () => {
       qualityLabel.textContent = `Quality: ${qualitySlider.value}`;
       clearPreset();
-      compress();
+      compressAll();
     });
 
     formatSelect.addEventListener('change', () => {
       clearPreset();
       track('format_changed', { format: formatSelect.value });
-      compress();
+      compressAll();
     });
 
     // ── Presets ──────────────────────────────────────────────────────────────
@@ -784,15 +972,15 @@
         clearPreset();
         btn.classList.add('active');
         activePreset = btn;
-        formatSelect.value            = btn.dataset.fmt;
-        qualitySlider.value           = btn.dataset.q;
-        qualityLabel.textContent      = `Quality: ${btn.dataset.q}`;
+        formatSelect.value       = btn.dataset.fmt;
+        qualitySlider.value      = btn.dataset.q;
+        qualityLabel.textContent = `Quality: ${btn.dataset.q}`;
         track('preset_selected', {
           preset_name: btn.dataset.name,
           format:      btn.dataset.fmt,
           quality:     parseInt(btn.dataset.q),
         });
-        compress();
+        compressAll();
       });
     });
 
@@ -801,7 +989,7 @@
       document.getElementById('fileInput').click()
     );
     document.getElementById('fileInput').addEventListener('change', e => {
-      loadFile(e.target.files[0], 'upload');
+      loadFiles(e.target.files, 'upload');
       e.target.value = '';
     });
 
@@ -820,8 +1008,8 @@
       e.preventDefault();
       dragCount = 0;
       beforePanel.classList.remove('drag-over');
-      const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
-      if (file) loadFile(file, 'drop');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) loadFiles(files, 'drop');
     });
     function hasImage(dt) {
       return dt && Array.from(dt.items || []).some(i => i.type.startsWith('image/'));
@@ -829,35 +1017,43 @@
 
     // ── Paste ────────────────────────────────────────────────────────────────
     document.addEventListener('paste', e => {
-      const item = Array.from(e.clipboardData.items || []).find(i => i.type.startsWith('image/'));
-      if (item) loadFile(item.getAsFile(), 'paste');
+      const file = Array.from(e.clipboardData.items || [])
+        .find(i => i.type.startsWith('image/'));
+      if (file) loadFiles([file.getAsFile()], 'paste');
     });
 
-    // ── Save ─────────────────────────────────────────────────────────────────
+    // ── Save active image ────────────────────────────────────────────────────
     saveBtn.addEventListener('click', () => {
-      if (!compressedBlob) return;
-      const ext = formatSelect.value === 'jpeg' ? 'jpg' : formatSelect.value;
-      const a   = document.createElement('a');
-      a.href     = URL.createObjectURL(compressedBlob);
-      a.download = `compressed.${ext}`;
+      const item = activeItem();
+      if (!item || !item.blob) return;
+      const ext  = formatSelect.value === 'jpeg' ? 'jpg' : formatSelect.value;
+      const base = item.name.replace(/\.[^.]+$/, '') || 'compressed';
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(item.blob);
+      a.download = `${base}.${ext}`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 60000);
       track('image_downloaded', {
         format:       formatSelect.value,
         quality:      parseInt(qualitySlider.value),
-        file_size_kb: Math.round(compressedBlob.size / 1024),
-        savings_pct:  originalSize > 0
-          ? parseFloat(Math.max(0, 100 - compressedBlob.size / originalSize * 100).toFixed(1))
+        file_size_kb: Math.round(item.blob.size / 1024),
+        savings_pct:  item.originalSize > 0
+          ? parseFloat(Math.max(0, 100 - item.blob.size / item.originalSize * 100).toFixed(1))
           : 0,
       });
     });
 
-    // ── Copy to clipboard ────────────────────────────────────────────────────
+    // ── Copy active image to clipboard ───────────────────────────────────────
     copyBtn.addEventListener('click', async () => {
-      if (!compressedBlob) return;
+      const item = activeItem();
+      if (!item || !item.blob) return;
       try {
-        let blobToWrite = compressedBlob;
-        if (compressedBlob.type !== 'image/png') {
+        let blobToWrite = item.blob;
+        if (item.blob.type !== 'image/png') {
+          canvas.width  = item.outW;
+          canvas.height = item.outH;
+          ctx.clearRect(0, 0, item.outW, item.outH);
+          ctx.drawImage(item.img, 0, 0, item.outW, item.outH);
           blobToWrite = await new Promise(res => canvas.toBlob(res, 'image/png'));
         }
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobToWrite })]);
@@ -867,6 +1063,132 @@
         showToast('Clipboard write failed — use Save instead');
       }
     });
+
+    // ── Download all as ZIP ──────────────────────────────────────────────────
+    downloadAllBtn.addEventListener('click', async () => {
+      if (items.length < 2) return;
+      const ext  = formatSelect.value === 'jpeg' ? 'jpg' : formatSelect.value;
+      const used = {};
+      const files = items.filter(it => it.blob).map(it => {
+        const base = (it.name.replace(/\.[^.]+$/, '') || 'image');
+        let name = `${base}.${ext}`, n = 1;
+        while (used[name]) name = `${base}-${n++}.${ext}`;
+        used[name] = true;
+        return { name, blob: it.blob };
+      });
+
+      downloadAllBtn.disabled = true;
+      try {
+        const zip = await buildZip(files);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zip);
+        a.download = 'compressed-images.zip';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+        showToast(`Downloaded ${files.length} images as ZIP`);
+        track('batch_downloaded', { count: files.length, format: formatSelect.value });
+      } catch {
+        showToast('ZIP build failed');
+      } finally {
+        downloadAllBtn.disabled = false;
+      }
+    });
+
+    // ── Minimal client-side ZIP writer (STORE, no compression) ───────────────
+    // Images are already compressed, so STORE keeps it fast and dependency-free.
+    const CRC_TABLE = (() => {
+      const t = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c >>> 0;
+      }
+      return t;
+    })();
+
+    function crc32(bytes) {
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++)
+        crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    async function buildZip(fileList) {
+      const enc    = new TextEncoder();
+      const chunks = [];
+      const records = [];
+      let offset = 0;
+
+      for (const f of fileList) {
+        const data      = new Uint8Array(await f.blob.arrayBuffer());
+        const nameBytes = enc.encode(f.name);
+        const crc       = crc32(data);
+        const size      = data.length;
+
+        const header = new Uint8Array(30 + nameBytes.length);
+        const dv = new DataView(header.buffer);
+        dv.setUint32(0, 0x04034b50, true); // local file header signature
+        dv.setUint16(4, 20, true);         // version needed
+        dv.setUint16(6, 0, true);          // flags
+        dv.setUint16(8, 0, true);          // method = STORE
+        dv.setUint16(10, 0, true);         // mod time
+        dv.setUint16(12, 0, true);         // mod date
+        dv.setUint32(14, crc, true);
+        dv.setUint32(18, size, true);      // compressed size
+        dv.setUint32(22, size, true);      // uncompressed size
+        dv.setUint16(26, nameBytes.length, true);
+        dv.setUint16(28, 0, true);         // extra length
+        header.set(nameBytes, 30);
+
+        chunks.push(header, data);
+        records.push({ nameBytes, crc, size, offset });
+        offset += header.length + size;
+      }
+
+      const central = [];
+      let cdSize = 0;
+      for (const r of records) {
+        const cd = new Uint8Array(46 + r.nameBytes.length);
+        const dv = new DataView(cd.buffer);
+        dv.setUint32(0, 0x02014b50, true); // central dir signature
+        dv.setUint16(4, 20, true);         // version made by
+        dv.setUint16(6, 20, true);         // version needed
+        dv.setUint16(8, 0, true);
+        dv.setUint16(10, 0, true);         // method
+        dv.setUint16(12, 0, true);
+        dv.setUint16(14, 0, true);
+        dv.setUint32(16, r.crc, true);
+        dv.setUint32(20, r.size, true);
+        dv.setUint32(24, r.size, true);
+        dv.setUint16(28, r.nameBytes.length, true);
+        dv.setUint16(30, 0, true);
+        dv.setUint16(32, 0, true);
+        dv.setUint16(34, 0, true);
+        dv.setUint16(36, 0, true);
+        dv.setUint32(38, 0, true);
+        dv.setUint32(42, r.offset, true);
+        cd.set(r.nameBytes, 46);
+        central.push(cd);
+        cdSize += cd.length;
+      }
+
+      const cdOffset = offset;
+      for (const c of central) chunks.push(c);
+
+      const eocd = new Uint8Array(22);
+      const dv = new DataView(eocd.buffer);
+      dv.setUint32(0, 0x06054b50, true);   // end of central dir signature
+      dv.setUint16(4, 0, true);
+      dv.setUint16(6, 0, true);
+      dv.setUint16(8, records.length, true);
+      dv.setUint16(10, records.length, true);
+      dv.setUint32(12, cdSize, true);
+      dv.setUint32(16, cdOffset, true);
+      dv.setUint16(20, 0, true);
+      chunks.push(eocd);
+
+      return new Blob(chunks, { type: 'application/zip' });
+    }
 
     // ── Toast ─────────────────────────────────────────────────────────────────
     let toastTimer;
